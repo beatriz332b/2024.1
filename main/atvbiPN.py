@@ -1,43 +1,187 @@
-from concreto import Concreto
-from cimento import define_tipo_cimento
+import tkinter as tk                    #Biblioteca que oferece o desenvolvimento de interfaces gráficas
+from tkinter import ttk, messagebox     #Criar uma janela de mensagem com uma mensagem específica da aplicação
+from openpyxl import Workbook           #Biblioteca que permite ler e escrever arquivos Excel
+import matplotlib.pyplot as plt         #Biblioteca para a criação de gráficos
 
-def main():
-    # Solicita ao usuário para inserir os dados
-    resistencia_alvo = float(input("Digite a resistência desejada do concreto (em MPa): "))
-    proporcao_cimento = float(input("Digite a proporção de cimento: "))
+# Constantes para tipos de cimento
+TIPOS_CIMENTO = {
+    "Cimento Portland Comum (CPI)": "Você escolheu o Cimento Portland Comum (CPI).",
+    "Cimento Portland Composto (CPII)": "Você escolheu o Cimento Portland Composto (CPII).",
+    "Cimento Portland de Alto Forno (CPIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIII).",
+    "Cimento Portland Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
+    "Cimento Portland de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
+}
 
-    # Define o tipo de cimento
-    tipo_cimento_escolhido = define_tipo_cimento()
-    print(tipo_cimento_escolhido)
+class Concreto:
+    def __init__(self, resistencia_desejada, proporcao_cimento, proporcao_areia, proporcao_pedra):
+        self.resistencia_desejada = resistencia_desejada
+        self.proporcao_cimento = proporcao_cimento
+        self.proporcao_areia = proporcao_areia
+        self.proporcao_pedra = proporcao_pedra
 
-    proporcao_areia = float(input("Digite a proporção de areia: "))
-    proporcao_pedra = float(input("Digite a proporção de pedra: "))
+    def calcular_ingredientes(self):
+        quantidade_cimento = self.resistencia_desejada * self.proporcao_cimento
+        quantidade_areia = self.resistencia_desejada * self.proporcao_areia
+        quantidade_pedra = self.resistencia_desejada * self.proporcao_pedra
+        return quantidade_cimento, quantidade_areia, quantidade_pedra
 
-    # Cria uma instância da classe Concreto
-    concreto = Concreto(resistencia_alvo, proporcao_cimento, proporcao_areia, proporcao_pedra)
+    @staticmethod
+    def selecionar_cimento(tipo_cimento):
+        cimentos = {
+            'CP-I': {'fck': 25, 'descricao': 'Cimento Portland Comum'},
+            'CP-II': {'fck': 32, 'descricao': 'Cimento Portland Composto'},
+            'CP-III': {'fck': 40, 'descricao': 'Cimento Portland de Alto Forno'}
+        }
+        return cimentos.get(tipo_cimento, {'fck': 25, 'descricao': 'Cimento Padrão'})
 
-    # Calcula os ingredientes do concreto com base nos dados fornecidos pelo usuário
-    cimento, areia, pedra = concreto.calcular_ingredientes()
+    @staticmethod
+    def calcular_area_aco(Md, fck, fyk, d, bw):
+        fyd = fyk / 1.15
+        fcd = fck / 1.4
+        z = 0.9 * d
+        As = Md / (0.87 * fyd * z)
+        return As
 
-    # Exibe os resultados
-    print("Quantidade de cimento necessária:", cimento, "kg")
-    print("Quantidade de areia necessária:", areia, "kg")
-    print("Quantidade de pedra necessária:", pedra, "kg")
+class BuildingMaterialsCalculator:
+    def __init__(self, length, width, height):
+        self.length = length
+        self.width = width
+        self.height = height
 
-    # Exemplo de cálculo de área de aço
-    tipo_cimento = 'CP-II'  # Usuário seleciona o tipo de cimento
-    propriedades_cimento = Concreto.selecionar_cimento(tipo_cimento)
+    def calculate_area(self):
+        return self.length * self.width
 
-    Md = 20000  # Momento fletor em N.cm
-    fck = propriedades_cimento['fck']  # Resistência característica do concreto em MPa
-    fyk = 500  # Resistência característica do aço em MPa
-    d = 50  # Altura útil da seção em cm
-    bw = 20  # Largura da viga em cm
+    def calculate_volume(self):
+        return self.length * self.width * self.height
 
-    # Cálculo da área de aço necessária
-    area_aco = Concreto.calcular_area_aco(Md, fck, fyk, d, bw)
-    print(f"Tipo de Cimento: {tipo_cimento} - {propriedades_cimento['descricao']}")
-    print(f"A área de aço necessária é: {area_aco:.2f} cm²")
+    def calculate_materials(self):
+        area = self.calculate_area()
+        volume = self.calculate_volume()
+        return {
+            "tinta": area / 10,
+            "cimento": volume * 0.02,
+            "azulejos": area * 1.5,
+            "areia": volume * 0.5,
+            "tijolos": volume * 12
+        }
+
+def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados):
+    try:
+        comprimento = float(entry_comprimento.get())
+        largura = float(entry_largura.get())
+        altura = float(entry_altura.get())
+        calculator = BuildingMaterialsCalculator(comprimento, largura, altura)
+        materials_required = calculator.calculate_materials()
+
+        resistencia_alvo = float(entry_resistencia.get())
+        proporcao_cimento = float(entry_proporcao_cimento.get())
+        proporcao_areia = float(entry_proporcao_areia.get())
+        proporcao_pedra = float(entry_proporcao_pedra.get())
+        tipo_cimento = combo_tipo_cimento.get()
+
+        tipo_cimento_escolhido = TIPOS_CIMENTO.get(tipo_cimento, "Tipo de cimento inválido.")
+        concreto = Concreto(resistencia_alvo, proporcao_cimento, proporcao_areia, proporcao_pedra)
+        cimento, areia, pedra = concreto.calcular_ingredientes()
+
+        result_text = "Materiais Necessários para o Edifício:\n"
+        for material, quantity in materials_required.items():
+            result_text += f"{material.capitalize()}: {quantity:.2f} unidades\n"
+
+        result_text += f"\n{tipo_cimento_escolhido}\n"
+        result_text += f"Quantidade de cimento necessária: {cimento:.2f} kg\n"
+        result_text += f"Quantidade de areia necessária: {areia:.2f} kg\n"
+        result_text += f"Quantidade de pedra necessária: {pedra:.2f} kg\n"
+
+        text_resultados.delete("1.0", tk.END)
+        text_resultados.insert(tk.END, result_text)
+
+        criar_grafico(materials_required, cimento, areia, pedra)
+        salvar_excel(materials_required, cimento, areia, pedra)
+    except ValueError:
+        messagebox.showerror("Erro de entrada", "Por favor, insira valores numéricos válidos.")
+
+def salvar_excel(materials_required, cimento, areia, pedra):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(["Material", "Quantidade"])
+
+    for material, quantity in materials_required.items():
+        sheet.append([material, quantity])
+
+    sheet.append(["cimento", cimento])
+    sheet.append(["areia", areia])
+    sheet.append(["pedra", pedra])
+
+    workbook.save("materiais_calculados.xlsx")
+    messagebox.showinfo("Sucesso", "Os resultados foram salvos no arquivo 'materiais_calculados.xlsx'")
+
+def criar_grafico(materials_required, cimento, areia, pedra):
+    labels = list(materials_required.keys()) + ["cimento", "areia", "pedra"]
+    values = list(materials_required.values()) + [cimento, areia, pedra]
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(labels, values, color='skyblue')
+    plt.xlabel('Materiais')
+    plt.ylabel('Quantidade')
+    plt.title('Quantidade de Materiais Necessários')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def create_interface():
+    root = tk.Tk()
+    root.title("Calculadora de Materiais de Construção")
+
+    frame_edificio = ttk.LabelFrame(root, text="Dados do Edifício")
+    frame_edificio.grid(row=0, column=0, padx=10, pady=10)
+
+    ttk.Label(frame_edificio, text="Comprimento (m):").grid(row=0, column=0, padx=5, pady=5)
+    entry_comprimento = ttk.Entry(frame_edificio)
+    entry_comprimento.grid(row=0, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_edificio, text="Largura (m):").grid(row=1, column=0, padx=5, pady=5)
+    entry_largura = ttk.Entry(frame_edificio)
+    entry_largura.grid(row=1, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_edificio, text="Altura (m):").grid(row=2, column=0, padx=5, pady=5)
+    entry_altura = ttk.Entry(frame_edificio)
+    entry_altura.grid(row=2, column=1, padx=5, pady=5)
+
+    frame_concreto = ttk.LabelFrame(root, text="Dados do Concreto")
+    frame_concreto.grid(row=1, column=0, padx=10, pady=10)
+
+    ttk.Label(frame_concreto, text="Resistência desejada (MPa):").grid(row=0, column=0, padx=5, pady=5)
+    entry_resistencia = ttk.Entry(frame_concreto)
+    entry_resistencia.grid(row=0, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_concreto, text="Proporção de cimento:").grid(row=1, column=0, padx=5, pady=5)
+    entry_proporcao_cimento = ttk.Entry(frame_concreto)
+    entry_proporcao_cimento.grid(row=1, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_concreto, text="Proporção de areia:").grid(row=2, column=0, padx=5, pady=5)
+    entry_proporcao_areia = ttk.Entry(frame_concreto)
+    entry_proporcao_areia.grid(row=2, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_concreto, text="Proporção de pedra:").grid(row=3, column=0, padx=5, pady=5)
+    entry_proporcao_pedra = ttk.Entry(frame_concreto)
+    entry_proporcao_pedra.grid(row=3, column=1, padx=5, pady=5)
+
+    ttk.Label(frame_concreto, text="Tipo de cimento:").grid(row=4, column=0, padx=5, pady=5)
+    combo_tipo_cimento = ttk.Combobox(frame_concreto, values=list(TIPOS_CIMENTO.keys()))
+    combo_tipo_cimento.grid(row=4, column=1, padx=5, pady=5)
+
+    btn_calcular_tudo = ttk.Button(frame_concreto, text="Calcular Tudo", command=lambda: calcular_tudo(
+        entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados
+    ))
+    btn_calcular_tudo.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+
+    frame_resultados = ttk.LabelFrame(root, text="Resultados")
+    frame_resultados.grid(row=0, column=1, rowspan=2, padx=10, pady=10)
+
+    text_resultados = tk.Text(frame_resultados, width=40, height=20)
+    text_resultados.grid(row=0, column=0, padx=5, pady=5)
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    create_interface()
