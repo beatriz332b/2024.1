@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt         #Biblioteca para a criação de gráfico
 
 # Constantes para tipos de cimento
 TIPOS_CIMENTO = {
-    "Cimento Portland Comum (CPI)": "Você escolheu o Cimento Portland Comum (CPI).",
-    "Cimento Portland Composto (CPII)": "Você escolheu o Cimento Portland Composto (CPII).",
-    "Cimento Portland de Alto Forno (CPIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIII).",
-    "Cimento Portland Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
-    "Cimento Portland de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
+    "Cimento Comum (CPI)": "Você escolheu o Cimento Portland Comum (CPI).",
+    "Cimento Composto (CPII)": "Você escolheu o Cimento Portland Composto (CPII).",
+    "Cimento de Alto Forno (CPIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIII).",
+    "Cimento  Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
+    "Cimento de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
 }
 
 #classe que faz os calculos do concreto
