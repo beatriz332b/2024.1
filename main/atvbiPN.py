@@ -12,6 +12,7 @@ TIPOS_CIMENTO = {
     "Cimento Portland de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
 }
 
+#classe que faz os calculos do concreto
 class Concreto:
     def __init__(self, resistencia_desejada, proporcao_cimento, proporcao_areia, proporcao_pedra):
         self.resistencia_desejada = resistencia_desejada
@@ -19,6 +20,7 @@ class Concreto:
         self.proporcao_areia = proporcao_areia
         self.proporcao_pedra = proporcao_pedra
 
+#Funçoes que que realiza os calculos dos ingredientes
     def calcular_ingredientes(self):
         quantidade_cimento = self.resistencia_desejada * self.proporcao_cimento
         quantidade_areia = self.resistencia_desejada * self.proporcao_areia
@@ -42,7 +44,8 @@ class Concreto:
         As = Md / (0.87 * fyd * z)
         return As
 
-class BuildingMaterialsCalculator:
+#Realiza os calculos dos materiais para o edificio
+class CalculadoraMateriaisConstrucao:
     def __init__(self, length, width, height):
         self.length = length
         self.width = width
@@ -64,13 +67,13 @@ class BuildingMaterialsCalculator:
             "areia": volume * 0.5,
             "tijolos": volume * 12
         }
-
+#inicia a parte da interface coletando os dados do usuario
 def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados):
     try:
         comprimento = float(entry_comprimento.get())
         largura = float(entry_largura.get())
         altura = float(entry_altura.get())
-        calculator = BuildingMaterialsCalculator(comprimento, largura, altura)
+        calculator = CalculadoraMateriaisConstrucao(comprimento, largura, altura)
         materials_required = calculator.calculate_materials()
 
         resistencia_alvo = float(entry_resistencia.get())
@@ -99,7 +102,8 @@ def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resisten
         salvar_excel(materials_required, cimento, areia, pedra)
     except ValueError:
         messagebox.showerror("Erro de entrada", "Por favor, insira valores numéricos válidos.")
-
+ 
+#Cria ou atualiza a planilha de documentos necessarios
 def salvar_excel(materials_required, cimento, areia, pedra):
     workbook = Workbook()
     sheet = workbook.active
@@ -178,7 +182,7 @@ def create_interface():
     frame_resultados = ttk.LabelFrame(root, text="Resultados")
     frame_resultados.grid(row=0, column=1, rowspan=2, padx=10, pady=10)
 
-    text_resultados = tk.Text(frame_resultados, width=40, height=20)
+    text_resultados = tk.Text(frame_resultados, width=50, height=20)
     text_resultados.grid(row=0, column=0, padx=5, pady=5)
 
     root.mainloop()
