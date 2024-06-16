@@ -1,18 +1,18 @@
-import tkinter as tk                    #Biblioteca que oferece o desenvolvimento de interfaces gráficas
-from tkinter import ttk, messagebox     #Criar uma janela de mensagem com uma mensagem específica da aplicação
-from openpyxl import Workbook           #Biblioteca que permite ler e escrever arquivos Excel
-import matplotlib.pyplot as plt         #Biblioteca para a criação de gráficos
+import tkinter as tk  # Biblioteca que oferece o desenvolvimento de interfaces gráficas
+from tkinter import ttk, messagebox  # Criar uma janela de mensagem com uma mensagem específica da aplicação
+from openpyxl import Workbook  # Biblioteca que permite ler e escrever arquivos Excel
+import matplotlib.pyplot as plt  # Biblioteca para a criação de gráficos
 
 # Constantes para tipos de cimento
 TIPOS_CIMENTO = {
     "Cimento Comum (CPI)": "Você escolheu o Cimento Portland Comum (CPI).",
     "Cimento Composto (CPII)": "Você escolheu o Cimento Portland Composto (CPII).",
     "Cimento de Alto Forno (CPIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIII).",
-    "Cimento  Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
+    "Cimento Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
     "Cimento de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
 }
 
-#classe que faz os calculos do concreto
+# Classe que faz os cálculos do concreto
 class Concreto:
     def __init__(self, resistencia_desejada, proporcao_cimento, proporcao_areia, proporcao_pedra):
         self.resistencia_desejada = resistencia_desejada
@@ -20,7 +20,7 @@ class Concreto:
         self.proporcao_areia = proporcao_areia
         self.proporcao_pedra = proporcao_pedra
 
-#Funçoes que que realiza os calculos dos ingredientes
+    # Funções que realizam os cálculos dos ingredientes
     def calcular_ingredientes(self):
         quantidade_cimento = self.resistencia_desejada * self.proporcao_cimento
         quantidade_areia = self.resistencia_desejada * self.proporcao_areia
@@ -44,7 +44,7 @@ class Concreto:
         As = Md / (0.87 * fyd * z)
         return As
 
-#Realiza os calculos dos materiais para o edificio
+# Realiza os cálculos dos materiais para o edifício
 class CalculadoraMateriaisConstrucao:
     def __init__(self, length, width, height):
         self.length = length
@@ -61,13 +61,14 @@ class CalculadoraMateriaisConstrucao:
         area = self.calculate_area()
         volume = self.calculate_volume()
         return {
-            "tinta": area / 10,
-            "cimento": volume * 0.02,
-            "azulejos": area * 1.5,
-            "areia": volume * 0.5,
-            "tijolos": volume * 12
+            "Tinta": {"quantidade": area / 10, "unidade": "litros"},
+            "Cimento": {"quantidade": volume * 0.02, "unidade": "kg"},
+            "Azulejos": {"quantidade": area * 1.5, "unidade": "unidades"},
+            "Areia": {"quantidade": volume * 0.5, "unidade": "m³"},
+            "Tijolos": {"quantidade": volume * 12, "unidade": "unidades"}
         }
-#inicia a parte da interface coletando os dados do usuario
+
+# Inicia a parte da interface coletando os dados do usuário
 def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados):
     try:
         comprimento = float(entry_comprimento.get())
@@ -87,8 +88,8 @@ def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resisten
         cimento, areia, pedra = concreto.calcular_ingredientes()
 
         result_text = "Materiais Necessários para o Edifício:\n"
-        for material, quantity in materials_required.items():
-            result_text += f"{material.capitalize()}: {quantity:.2f} unidades\n"
+        for material, details in materials_required.items():
+            result_text += f"{material}: {details['quantidade']:.2f} {details['unidade']}\n"
 
         result_text += f"\n{tipo_cimento_escolhido}\n"
         result_text += f"Quantidade de cimento necessária: {cimento:.2f} kg\n"
@@ -102,26 +103,27 @@ def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resisten
         salvar_excel(materials_required, cimento, areia, pedra)
     except ValueError:
         messagebox.showerror("Erro de entrada", "Por favor, insira valores numéricos válidos.")
- 
-#Cria ou atualiza a planilha de documentos necessarios
+
+# Cria ou atualiza a planilha de documentos necessários
 def salvar_excel(materials_required, cimento, areia, pedra):
     workbook = Workbook()
     sheet = workbook.active
-    sheet.append(["Material", "Quantidade"])
+    sheet.append(["Material", "Quantidade", "Unidade", "Descrição"])
 
-    for material, quantity in materials_required.items():
-        sheet.append([material, quantity])
+    for material, details in materials_required.items():
+        sheet.append([material, details["quantidade"], details["unidade"], ""])
 
-    sheet.append(["cimento", cimento])
-    sheet.append(["areia", areia])
-    sheet.append(["pedra", pedra])
+    sheet.append(["Cimento", cimento, "kg", ""])
+    sheet.append(["Areia", areia, "kg", ""])
+    sheet.append(["Pedra", pedra, "kg", ""])
 
     workbook.save("materiais_calculados.xlsx")
     messagebox.showinfo("Sucesso", "Os resultados foram salvos no arquivo 'materiais_calculados.xlsx'")
 
+# Cria um gráfico
 def criar_grafico(materials_required, cimento, areia, pedra):
-    labels = list(materials_required.keys()) + ["cimento", "areia", "pedra"]
-    values = list(materials_required.values()) + [cimento, areia, pedra]
+    labels = list(materials_required.keys()) + ["Cimento", "Areia", "Pedra"]
+    values = [details["quantidade"] for details in materials_required.values()] + [cimento, areia, pedra]
 
     plt.figure(figsize=(10, 5))
     plt.bar(labels, values, color='skyblue')
@@ -132,6 +134,7 @@ def criar_grafico(materials_required, cimento, areia, pedra):
     plt.tight_layout()
     plt.show()
 
+# Cria e organiza a interface do usuário
 def create_interface():
     root = tk.Tk()
     root.title("Calculadora de Materiais de Construção")
