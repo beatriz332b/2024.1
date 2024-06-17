@@ -36,14 +36,6 @@ class Concreto:
         }
         return cimentos.get(tipo_cimento, {'fck': 25, 'descricao': 'Cimento Padrão'})
 
-    @staticmethod
-    def calcular_area_aco(Md, fck, fyk, d, bw):
-        fyd = fyk / 1.15
-        fcd = fck / 1.4
-        z = 0.9 * d
-        As = Md / (0.87 * fyd * z)
-        return As
-
 # Realiza os cálculos dos materiais para o edifício
 class CalculadoraMateriaisConstrucao:
     def __init__(self, length, width, height):
