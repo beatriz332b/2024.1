@@ -1,13 +1,14 @@
-import tkinter as tk  # Biblioteca que oferece o desenvolvimento de interfaces gráficas
-from tkinter import ttk, messagebox  # Criar uma janela de mensagem com uma mensagem específica da aplicação
-from openpyxl import Workbook  # Biblioteca que permite ler e escrever arquivos Excel
-import matplotlib.pyplot as plt  # Biblioteca para a criação de gráficos
+import tkinter as tk
+from tkinter import ttk, messagebox
+from openpyxl import Workbook
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 # Constantes para tipos de cimento
 TIPOS_CIMENTO = {
     "Cimento Comum (CPI)": "Você escolheu o Cimento Portland Comum (CPI).",
     "Cimento Composto (CPII)": "Você escolheu o Cimento Portland Composto (CPII).",
-    "Cimento de Alto Forno (CPIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIII).",
+    "Cimento de Alto Forno (CPIIII)": "Você escolheu o Cimento Portland de Alto Forno (CPIIII).",
     "Cimento Pozolânico (CPII-Z)": "Você escolheu o Cimento Portland Pozolânico (CPII-Z).",
     "Cimento de Alta Resistência Inicial (CPV-ARI)": "Você escolheu o Cimento Portland de Alta Resistência Inicial (CPV-ARI).",
 }
@@ -61,7 +62,7 @@ class CalculadoraMateriaisConstrucao:
         }
 
 # Inicia a parte da interface coletando os dados do usuário
-def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados):
+def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados, frame_grafico):
     try:
         comprimento = float(entry_comprimento.get())
         largura = float(entry_largura.get())
@@ -91,7 +92,7 @@ def calcular_tudo(entry_comprimento, entry_largura, entry_altura, entry_resisten
         text_resultados.delete("1.0", tk.END)
         text_resultados.insert(tk.END, result_text)
 
-        criar_grafico(materials_required, cimento, areia, pedra)
+        criar_grafico(materials_required, cimento, areia, pedra, frame_grafico)
         salvar_excel(materials_required, cimento, areia, pedra)
     except ValueError:
         messagebox.showerror("Erro de entrada", "Por favor, insira valores numéricos válidos.")
@@ -113,18 +114,26 @@ def salvar_excel(materials_required, cimento, areia, pedra):
     messagebox.showinfo("Sucesso", "Os resultados foram salvos no arquivo 'materiais_calculados.xlsx'")
 
 # Cria um gráfico
-def criar_grafico(materials_required, cimento, areia, pedra):
+def criar_grafico(materials_required, cimento, areia, pedra, frame_grafico):
     labels = list(materials_required.keys()) + ["Cimento", "Areia", "Pedra"]
     values = [details["quantidade"] for details in materials_required.values()] + [cimento, areia, pedra]
 
-    plt.figure(figsize=(10, 5))
-    plt.bar(labels, values, color='skyblue')
-    plt.xlabel('Materiais')
-    plt.ylabel('Quantidade')
-    plt.title('Quantidade de Materiais Necessários')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    fig = Figure(figsize=(10, 5), dpi=100)
+    ax = fig.add_subplot(111)
+    ax.bar(labels, values, color='skyblue')
+    ax.set_xlabel('Materiais')
+    ax.set_ylabel('Quantidade')
+    ax.set_title('Quantidade de Materiais Necessários')
+    ax.tick_params(axis='x', rotation=45)
+    ax.grid(True)
+
+    canvas = FigureCanvasTkAgg(fig, master=frame_grafico)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    toolbar = NavigationToolbar2Tk(canvas, frame_grafico)
+    toolbar.update()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 # Cria e organiza a interface do usuário
 def create_interface():
@@ -142,7 +151,7 @@ def create_interface():
     entry_largura = ttk.Entry(frame_edificio)
     entry_largura.grid(row=1, column=1, padx=5, pady=5)
 
-    ttk.Label(frame_edificio, text="Altura (m):").grid(row=2, column=0, padx=5, pady=5)
+    ttk.Label(frame_edificio, text="Altura (m):").grid(row= 2, column=0, padx=5, pady=5)
     entry_altura = ttk.Entry(frame_edificio)
     entry_altura.grid(row=2, column=1, padx=5, pady=5)
 
@@ -169,16 +178,20 @@ def create_interface():
     combo_tipo_cimento = ttk.Combobox(frame_concreto, values=list(TIPOS_CIMENTO.keys()))
     combo_tipo_cimento.grid(row=4, column=1, padx=5, pady=5)
 
-    btn_calcular_tudo = ttk.Button(frame_concreto, text="Calcular Tudo", command=lambda: calcular_tudo(
-        entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento, entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados
-    ))
-    btn_calcular_tudo.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
-
     frame_resultados = ttk.LabelFrame(root, text="Resultados")
     frame_resultados.grid(row=0, column=1, rowspan=2, padx=10, pady=10)
 
     text_resultados = tk.Text(frame_resultados, width=50, height=20)
     text_resultados.grid(row=0, column=0, padx=5, pady=5)
+
+    frame_grafico = ttk.LabelFrame(root, text="Gráfico")
+    frame_grafico.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+    btn_calcular_tudo = ttk.Button(frame_concreto, text="Calcular Tudo", command=lambda: calcular_tudo(
+        entry_comprimento, entry_largura, entry_altura, entry_resistencia, entry_proporcao_cimento,
+        entry_proporcao_areia, entry_proporcao_pedra, combo_tipo_cimento, text_resultados, frame_grafico
+    ))
+    btn_calcular_tudo.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
 
     root.mainloop()
 
